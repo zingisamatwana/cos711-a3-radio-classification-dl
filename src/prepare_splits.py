@@ -20,12 +20,12 @@ def _norm_float_for_match(x: float) -> str:
     s1 = f"{x:.6f}".rstrip("0").rstrip(".")
     s2 = f"{x:.3f}".rstrip("0").rstrip(".")
     s3 = f"{x:.2f}".rstrip("0").rstrip(".")
-    s4 = str(float(f"{x:.6f}"))  # canonical
+    s4 = str(float(f"{x:.6f}")) 
     return {s1, s2, s3, s4}
 
 def index_all_images(root: Path):
  
-    exts = {".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"}
+    exts = {".png", ".jpg", ".jpeg"}
     files = []
     for p in root.rglob("*"):
         if p.is_file() and p.suffix.lower() in exts:
@@ -59,7 +59,7 @@ def main():
 
     all_imgs = index_all_images(DATA_DIR)
     if not all_imgs:
-        print("No images found under data/. Please extract typ.zip, exo.zip etc.", file=sys.stderr)
+        print("No images found ", file=sys.stderr)
         sys.exit(1)
 
     filepaths = []
@@ -75,7 +75,7 @@ def main():
     labels["filepath"] = filepaths
     labels = labels.dropna(subset=["filepath"]).reset_index(drop=True)
     if missing:
-        print(f"Warning: {missing} images could not be matched and were dropped.")
+        print(f"Warning: {missing} images  not matched and were dropped.")
 
  
     train_df, val_df = train_test_split(

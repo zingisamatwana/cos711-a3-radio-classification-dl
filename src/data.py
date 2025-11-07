@@ -15,7 +15,7 @@ def build_transforms(train: bool):
     if train:
         return Compose([
             Resize(IMG_SIZE, IMG_SIZE, interpolation=cv2.INTER_CUBIC),
-            # ShiftScaleRotate(shift_limit=0.03, scale_limit=0.05, rotate_limit=15, p=0.6, border_mode=cv2.BORDER_REFLECT101),
+  
             Affine(scale=(0.95, 1.05), rotate=(-15, 15), translate_percent=(-0.03, 0.03), p=0.6),
             HorizontalFlip(p=0.5),
             VerticalFlip(p=0.5),
@@ -41,7 +41,7 @@ def build_transforms(train: bool):
 
 class GalaxySingleHead(Dataset):
     """
-    train/val csv must have: filepath,label
+    Creates filepath, label on train and val csv file
     """
     def __init__(self, csv_path: str, class_names: List[str], train: bool):
         self.df = pd.read_csv(csv_path)
@@ -53,16 +53,16 @@ class GalaxySingleHead(Dataset):
     def __len__(self): return len(self.df) 
 
     def _load_gray_as_rgb(self, path: str):
-        img = cv2.imread(path, cv2.IMREAD_UNCHANGED) # keeps channels as-is
+        img = cv2.imread(path, cv2.IMREAD_UNCHANGED) 
         if img is None:
             raise FileNotFoundError(path)
         
-        if img.ndim == 2: # grayscale -> 3ch
+        if img.ndim == 2:  
             img = np.repeat(img[..., None], 3, axis=2)
         elif img.ndim == 3:
-            if img.shape[2] == 1: # single channel -> 3ch
+            if img.shape[2] == 1:  
                 img = np.repeat(img, 3, axis=2)
-            elif img.shape[2] == 4: # drop alpha
+            elif img.shape[2] == 4: 
                 img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
         return img
 

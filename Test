@@ -1,0 +1,4 @@
+## Build:
+# step1: python prepare_splits.py --labels_csv ../data/labels.csv --train_csv ../data/train.csv --val_csv ../data/val.csv
+# step2: python -m src.train --train_csv data/train.csv --val_csv data/val.csv --out_dir Output/run_resnet50 --epochs 25 --batch 32 --lr 1e-4
+

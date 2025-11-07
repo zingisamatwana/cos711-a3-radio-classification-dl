@@ -3,7 +3,7 @@
 
 #### Project Summary
 
-This project focuses on classifying **MeerKAT radio galaxy sources** using three deep learning approaches implemented collaboratively by the team:
+This project focuses on classifying **MeerKAT radio galaxy sources** using three deep learning approaches implemented by our team:
 
 - **Basic CNN** A custom convolutional neural network built from scratch to establish a baseline for radio morphology classification.  
 - **Transfer Learning (ResNet-50):** Fine-tuned a pretrained ResNet-50 model on 1,970 labeled MeerKAT images to leverage ImageNet features for feature extraction and generalisation.  
@@ -100,6 +100,7 @@ README.md
 + code runs
 + docs/README updated where needed
 + don't need to commit data files
+
 
 
 

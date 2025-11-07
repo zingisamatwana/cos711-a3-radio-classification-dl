@@ -151,18 +151,14 @@ def predict_batch(model, dataloader, mlb):
             
             all_preds.append(preds)
             all_probs.append(probs.cpu().numpy())
-    
-    # Stack into 2D arrays
+     
     all_preds = np.vstack(all_preds)
     all_probs = np.vstack(all_probs)
-    
-    # Convert to labels
+     
     results = []
     for i in range(len(all_preds)):
         pred = all_preds[i]
-        prob = all_probs[i]
-        
-        # inverse_transform expects 2D array, so reshape pred to (1, n_classes)
+        prob = all_probs[i] 
         labels = mlb.inverse_transform(pred.reshape(1, -1))[0]
         
         if len(labels) == 0:
@@ -192,8 +188,7 @@ def predict_test_set(model, mlb):
     
     test_df = pd.read_csv(config.TEST_FILE, header=None, names=['ra', 'dec'])
     print(f" Loaded {len(test_df)} test coordinates")
-    
-    # Build image index
+     
     print(" Building image index...")
     image_dict = {}
     
@@ -206,8 +201,7 @@ def predict_test_set(model, mlb):
                         image_dict[(ra, dec)] = os.path.join(directory, filename)
     
     print(f" Indexed {len(image_dict)} images")
-    
-    # Match coordinates
+     
     print(" Matching coordinates...")
     matched_indices = []
     test_image_paths = []
@@ -222,9 +216,7 @@ def predict_test_set(model, mlb):
     
     if not test_image_paths:
         print(" No matches found!")
-        return None
-    
-    # Create dataset
+        return None 
     transform = transforms.Compose([
         transforms.Resize((config.IMG_SIZE, config.IMG_SIZE)),
         transforms.ToTensor(),
@@ -284,14 +276,12 @@ def predict_unlabeled_set(model, mlb):
     if not os.path.exists(config.UNL_DIR):
         print(f" {config.UNL_DIR} not found!")
         return None
-    
-    # Get all files
+     
     files = [f for f in os.listdir(config.UNL_DIR) 
             if f.endswith('.png') and not f.startswith('.')]
     
     print(f" Found {len(files)} unlabeled images")
-    
-    # Parse coordinates
+     
     image_data = []
     for filename in files:
         ra, dec = parse_filename_coordinates(filename)
@@ -303,8 +293,7 @@ def predict_unlabeled_set(model, mlb):
             })
     
     print(f" Parsed {len(image_data)} coordinates")
-    
-    # Create dataset
+     
     transform = transforms.Compose([
         transforms.Resize((config.IMG_SIZE, config.IMG_SIZE)),
         transforms.ToTensor(),
@@ -363,18 +352,14 @@ def save_labels_csv(df, output_file):
 # ==================== MAIN ====================
 
 def main():
-    """Main execution"""
-    # Initialize
+    """Main execution""" 
     mlb = MultiLabelBinarizer(classes=config.CLASSES)
-    mlb.fit([config.CLASSES])
-    
-    # Load model
+    mlb.fit([config.CLASSES]) 
     model = load_model()
     if model is None:
         print("\n Cannot proceed without model!")
         return
-    
-    # Generate predictions
+     
     test_results = predict_test_set(model, mlb)
     unlabeled_results = predict_unlabeled_set(model, mlb)
     

@@ -43,32 +43,27 @@ class DataPreparation:
                                     ('Unlabeled', self.unl_dir)]:
             print(f"\n {dir_name} Directory: {dir_path}")
             
-            if os.path.exists(dir_path):
-                # Get all files
+            if os.path.exists(dir_path): 
                 all_files = os.listdir(dir_path)
                 image_files = [f for f in all_files 
                               if f.endswith('.png') or f.endswith('.fits.png')]
                 
                 print(f"   Total files: {len(all_files)}")
                 print(f"   Image files: {len(image_files)}")
-                
-                # Show sample filenames
+                 
                 print(f"\n   Sample filenames:")
                 for i, filename in enumerate(image_files[:5]):
                     print(f"      {i+1}. {filename}")
-                
-                # Analyze filename patterns
+                 
                 if len(image_files) > 0:
                     print(f"\n   Filename analysis:")
-                    
-                    # Check for different patterns
+                     
                     has_underscore = sum('_' in f for f in image_files[:10])
                     has_fits = sum('.fits.png' in f for f in image_files[:10])
                     
-                    print(f"      • Files with underscores: {has_underscore}/10")
-                    print(f"      • Files with .fits.png: {has_fits}/10")
-                    
-                    # Try to parse coordinates
+                    print(f"Files with underscores: {has_underscore}/10")
+                    print(f"Files with .fits.png: {has_fits}/10")
+                     
                     sample_file = image_files[0]
                     print(f"\n   Parsing sample: '{sample_file}'")
                     ra, dec = self.parse_filename_coordinates(sample_file)
@@ -77,9 +72,7 @@ class DataPreparation:
             else:
                 print(f"   WARNING: Directory not found!")
         
-        print("\n" + "=" * 70)
-    
-    # STEP 1: LOAD AND PARSE LABELS 
+        print("\n" + "=" * 70) 
     
     def load_labels(self):
         """
@@ -93,42 +86,32 @@ class DataPreparation:
         df = pd.read_csv(self.labels_file, header=None)
         print(f"\nRaw CSV shape: {df.shape}")
         print(f"First few rows:\n{df.head()}")
-        
-        # First two columns are always RA and DEC coordinates
+         
         columns = ['ra', 'dec'] + [f'label_{i}' for i in range(len(df.columns)-2)]
         df.columns = columns
-        
-        # Extract all labels from each row (combine all label columns)
+         
         def extract_labels(row):
             labels = []
-            for col in df.columns[2:]:  # Skip ra, dec columns
+            for col in df.columns[2:]: 
                 val = row[col]
                 if pd.notna(val) and str(val).strip() != '':
                     label = str(val).strip()
-                    if label not in labels:  # Avoid duplicates
+                    if label not in labels: 
                         labels.append(label)
             return labels
         
-        df['labels'] = df.apply(extract_labels, axis=1)
-        
-        # Keep only rows with at least one label
-        df_with_labels = df[df['labels'].apply(len) > 0].copy()
-        
-        # Keep only coordinate and labels columns
+        df['labels'] = df.apply(extract_labels, axis=1) 
+        df_with_labels = df[df['labels'].apply(len) > 0].copy() 
         self.labels_df = df_with_labels[['ra', 'dec', 'labels']].reset_index(drop=True)
         
         print(f"\nParsed {len(self.labels_df)} labeled sources")
-        print(f"Columns: {list(self.labels_df.columns)}")
-        
-        # Show sample labels
+        print(f"Columns: {list(self.labels_df.columns)}") 
         print("\nSample labels:")
         for i in range(min(5, len(self.labels_df))):
             print(f"  Source {i+1} [{self.labels_df.iloc[i]['ra']:.2f}, "
                   f"{self.labels_df.iloc[i]['dec']:.2f}]: {self.labels_df.iloc[i]['labels']}")
         
-        return self.labels_df
-    
-    # STEP 2: ANALYZE LABELS
+        return self.labels_df 
     
     def analyze_labels(self):
         """
@@ -139,61 +122,49 @@ class DataPreparation:
         
         
         if self.labels_df is None:
-            self.load_labels()
-        
-        # Extract all individual labels
+            self.load_labels() 
         all_labels = []
         for labels_list in self.labels_df['labels']:
             all_labels.extend(labels_list)
-        
-        # Count occurrences
+         
         label_counts = Counter(all_labels)
         
         print(f"\nTotal label instances: {len(all_labels)}")
         print(f"Unique label types: {len(label_counts)}")
         print(f"Sources with labels: {len(self.labels_df)}")
         
-        # Multi-label statistics
         label_lengths = self.labels_df['labels'].apply(len)
         print(f"\nMulti-label Statistics:")
-        print(f"   • Sources with 1 label: {sum(label_lengths == 1)}")
-        print(f"   • Sources with 2 labels: {sum(label_lengths == 2)}")
-        print(f"   • Sources with 3+ labels: {sum(label_lengths >= 3)}")
-        print(f"   • Average labels per source: {label_lengths.mean():.2f}")
-        print(f"   • Max labels on a source: {label_lengths.max()}")
-        
-        # Label distribution
+        print(f"Sources with 1 label: {sum(label_lengths == 1)}")
+        print(f"Sources with 2 labels: {sum(label_lengths == 2)}")
+        print(f"Sources with 3+ labels: {sum(label_lengths >= 3)}")
+        print(f"Average labels per source: {label_lengths.mean():.2f}")
+        print(f"Max labels on a source: {label_lengths.max()}")
+         
         print(f"\nLabel Distribution (sorted by frequency):")
         sorted_labels = sorted(label_counts.items(), key=lambda x: x[1], reverse=True)
         for label, count in sorted_labels:
             percentage = (count / len(all_labels)) * 100
             print(f"   • {label:25s}: {count:4d} ({percentage:5.1f}%)")
-        
-        # Identify rare classes (less than 5% of data)
+         
         rare_threshold = len(all_labels) * 0.05
         rare_classes = [label for label, count in label_counts.items() 
                        if count < rare_threshold]
         print(f"\nRare classes (< 5%): {rare_classes}")
-        
-        # Save distribution for later use
+         
         self.class_distribution = label_counts
         
         return label_counts
-    
-    #STEP 3: COORDINATE MATCHING 
-    
+      
     def parse_filename_coordinates(self, filename):
         """
         Extract RA and DEC coordinates from image filename
         Expected format: "RA DEC_[...] deg_(...).fits.png"
         Example: "0.250 -25.084_[0.02238656 0.02238656] deg_(Abell_141_1pln-forPyBDSF.FITS).fits.png"
         """
-        try:
-            # The coordinates are before the first underscore, separated by space
-            # Split by underscore to get the coordinate part
+        try: 
             coord_part = filename.split('_')[0]
-            
-            # Split by space to separate RA and DEC
+             
             coords = coord_part.split()
             
             if len(coords) == 2:
@@ -212,24 +183,19 @@ class DataPreparation:
         """
         if source_ra is None or source_dec is None:
             return []
-        
-        # Calculate distances to all labeled sources
+         
         source_coords = np.array([[source_ra, source_dec]])
         label_coords = self.labels_df[['ra', 'dec']].values
-        
-        # Euclidean distance
+         
         distances = cdist(source_coords, label_coords, metric='euclidean')[0]
-        
-        # Find closest match
+         
         min_idx = np.argmin(distances)
         min_distance = distances[min_idx]
         
         if min_distance < threshold:
             return self.labels_df.iloc[min_idx]['labels']
         
-        return []
-    
-    # STEP 4: COLLECT IMAGES 
+        return [] 
     
     def collect_images_with_labels(self, verbose=True):
         """
@@ -242,11 +208,8 @@ class DataPreparation:
         if self.labels_df is None:
             self.load_labels()
         
-        image_data = []
-        
-        # Process typical sources
-        if os.path.exists(self.typ_dir):
-            # Get all files excluding checkpoint directories
+        image_data = [] 
+        if os.path.exists(self.typ_dir): 
             all_files = os.listdir(self.typ_dir)
             typ_files = [f for f in all_files 
                         if (f.endswith('.png') or f.endswith('.fits.png')) 
@@ -278,8 +241,7 @@ class DataPreparation:
             print(f"   {unmatched} images without matching labels")
         else:
             print(f"\nWarning: {self.typ_dir} not found")
-        
-        # Process exotic sources
+         
         if os.path.exists(self.exo_dir):
             all_files = os.listdir(self.exo_dir)
             exo_files = [f for f in all_files 
@@ -312,8 +274,7 @@ class DataPreparation:
             print(f"   {unmatched} images without matching labels")
         else:
             print(f"\nWarning: {self.exo_dir} not found")
-        
-        # Create dataframe
+         
         if len(image_data) > 0:
             self.images_df = pd.DataFrame(image_data)
             
@@ -324,9 +285,7 @@ class DataPreparation:
             print(f"\nNo images matched with labels")
             self.images_df = pd.DataFrame()
         
-        return self.images_df
-    
-    # STEP 5: DATA QUALITY CHECKS 
+        return self.images_df 
     
     def check_image_quality(self, sample_size=100):
         """
@@ -338,9 +297,7 @@ class DataPreparation:
         
         if self.images_df is None or len(self.images_df) == 0:
             print("\nNo images available for quality check")
-            return None
-        
-        # Sample images for quality check
+            return None 
         sample_df = self.images_df.sample(min(sample_size, len(self.images_df)))
         
         sizes = []
@@ -356,21 +313,18 @@ class DataPreparation:
                 modes.append(img.mode)
             except Exception as e:
                 corrupted.append(row['path'])
-        
-        # Analyze sizes
+         
         unique_sizes = list(set(sizes))
         print(f"\nImage Dimensions:")
         size_counts = Counter(sizes)
         for size, count in size_counts.most_common(5):
-            print(f"   • {size}: {count} images")
-        
-        # Analyze modes
+            print(f"{size}: {count} images")
+         
         print(f"\nColor Modes:")
         mode_counts = Counter(modes)
         for mode, count in mode_counts.items():
             print(f"   • {mode}: {count} images")
-        
-        # Report corrupted
+         
         if corrupted:
             print(f"\nCorrupted images found: {len(corrupted)}")
             for path in corrupted[:5]:
@@ -383,9 +337,7 @@ class DataPreparation:
             'modes': modes,
             'corrupted': corrupted
         }
-    
-    # STEP 6: CLASS IMBALANCE ANALYSIS 
-    
+      
     def analyze_class_imbalance(self):
         """
         Analyze class imbalance and suggest handling strategies
@@ -396,8 +348,7 @@ class DataPreparation:
         
         if self.class_distribution is None:
             self.analyze_labels()
-        
-        # Calculate imbalance ratio
+         
         counts = np.array(list(self.class_distribution.values()))
         max_count = counts.max()
         min_count = counts.min()
@@ -407,23 +358,20 @@ class DataPreparation:
         print(f"   • Most common class: {max_count} samples")
         print(f"   • Least common class: {min_count} samples")
         print(f"   • Imbalance ratio: {imbalance_ratio:.2f}:1")
-        
-        # Categorize severity
+         
         if imbalance_ratio > 100:
             severity = "SEVERE"
-            color = "🔴"
+            color = "red"
         elif imbalance_ratio > 20:
             severity = "MODERATE"
-            color = "🟡"
+            color = "yellow"
         else:
             severity = "MILD"
-            color = "🟢"
+            color = "green"
         
         print(f"\n{color} Imbalance Severity: {severity}")
                 
-        return imbalance_ratio
-    
-    # STEP 7: PREPARE UNLABELED DATA 
+        return imbalance_ratio 
     
     def collect_unlabeled_images(self):
         """
@@ -460,9 +408,7 @@ class DataPreparation:
             print(f"  Warning: {self.unl_dir} not found")
         
         return pd.DataFrame(unlabeled_data)
-    
-    # STEP 8: PREPARE TEST SET 
-    
+      
     def prepare_test_set(self):
         """
         Load and prepare test set coordinates
@@ -478,9 +424,7 @@ class DataPreparation:
             return test_df
         else:
             print(f"  Warning: {self.test_file} not found")
-            return None
-    
-    #  STEP 9: VISUALIZATION 
+            return None 
     
     def visualize_data(self, save_path='data_analysis/'):
         """
@@ -491,8 +435,7 @@ class DataPreparation:
         
         
         os.makedirs(save_path, exist_ok=True)
-        
-        # 1. Label distribution
+         
         if self.class_distribution:
             plt.figure(figsize=(12, 6))
             labels = list(self.class_distribution.keys())
@@ -507,8 +450,7 @@ class DataPreparation:
             plt.savefig(os.path.join(save_path, 'class_distribution.png'), dpi=300)
             print(f" Saved: class_distribution.png")
             plt.close()
-        
-        # 2. Multi-label distribution
+         
         if self.images_df is not None and len(self.images_df) > 0:
             plt.figure(figsize=(10, 6))
             label_counts = self.images_df['num_labels'].value_counts().sort_index()
@@ -521,8 +463,7 @@ class DataPreparation:
             plt.savefig(os.path.join(save_path, 'multilabel_distribution.png'), dpi=300)
             print(f" Saved: multilabel_distribution.png")
             plt.close()
-        
-            # 3. Sample images
+         
             fig, axes = plt.subplots(2, 4, figsize=(16, 8))
             axes = axes.flatten()
             
@@ -546,43 +487,23 @@ class DataPreparation:
             plt.close()
         
         print(f"\n All visualizations saved to: {save_path}")
-    
-    #  MASTER PIPELINE 
-    
+      
     def run_complete_preparation(self):
         """
         Run the complete data preparation pipeline
         """
         print("\n" + "=" * 70)
         print("RADIO SOURCE DATA PREPARATION PIPELINE")
-        print("=" * 70)
-        
-        # Step 0: Explore naming
-        self.explore_image_naming()
-        
-        # Step 1: Load labels
-        self.load_labels()
-        
-        # Step 2: Analyze labels
-        self.analyze_labels()
-        
-        # Step 3: Collect and match images
-        self.collect_images_with_labels()
-        
-        # Step 4: Quality checks
+        print("=" * 70) 
+        self.explore_image_naming() 
+        self.load_labels() 
+        self.analyze_labels() 
+        self.collect_images_with_labels() 
         if self.images_df is not None and len(self.images_df) > 0:
-            self.check_image_quality()
-        
-        # Step 5: Class imbalance analysis
-        self.analyze_class_imbalance()
-        
-        # Step 6: Collect unlabeled data
-        unlabeled_df = self.collect_unlabeled_images()
-        
-        # Step 7: Prepare test set
-        test_df = self.prepare_test_set()
-        
-        # Step 8: Visualizations
+            self.check_image_quality() 
+        self.analyze_class_imbalance() 
+        unlabeled_df = self.collect_unlabeled_images() 
+        test_df = self.prepare_test_set() 
         if self.images_df is not None and len(self.images_df) > 0:
             self.visualize_data()
         
@@ -601,28 +522,21 @@ class DataPreparation:
             'unlabeled_images': unlabeled_df,
             'test_coordinates': test_df,
             'class_distribution': self.class_distribution
-        }
+        } 
 
-#  MAIN EXECUTION 
-
-if __name__ == "__main__":
-    # Initialize with correct directory names
+if __name__ == "__main__": 
     data_prep = DataPreparation(
         typ_dir='typ_PNG/',
         exo_dir='exo_PNG/',
         unl_dir='unl_PNG/',
         labels_file='labels.csv',
         test_file='test.csv'
-    )
-    
-    # Run complete preparation
-    results = data_prep.run_complete_preparation()
-    
-    # Save prepared data
+    ) 
+    results = data_prep.run_complete_preparation() 
     if results['labeled_images'] is not None and len(results['labeled_images']) > 0:
         print("\n Saving prepared datasets...")
         results['labeled_images'].to_csv('prepared_labeled_data.csv', index=False)
         results['unlabeled_images'].to_csv('prepared_unlabeled_data.csv', index=False)
         print(" Saved prepared datasets")
     else:
-        print("\n WARNING:  No labeled images to save. Check coordinate matching!")
+        print("\n WARNING: Images not found")

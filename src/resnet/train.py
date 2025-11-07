@@ -35,7 +35,6 @@ def main():
     train_dl = DataLoader(train_ds, batch_size=args.batch, shuffle=True, num_workers=4, pin_memory=True)
     val_dl   = DataLoader(val_ds,   batch_size=args.batch, shuffle=False, num_workers=4, pin_memory=True)
 
-    # Class weights (inverse frequency)
     counts = np.array([ (train_ds.df["label"]==c).sum() for c in CLASS_NAMES ], dtype=float)
     w = 1.0 / np.clip(counts, 1.0, None)
     w = w / w.sum() * len(CLASS_NAMES)
@@ -54,7 +53,7 @@ def main():
     for epoch in range(args.epochs):
         model.train()
         if epoch == UNFREEZE_AT_EPOCH:
-            # unfreeze everything for fine-tuning, lower LR
+            
             for p in model.parameters(): p.requires_grad = True
             opt = AdamW(model.parameters(), lr=args.lr/3, weight_decay=WEIGHT_DECAY)
             sch = CosineAnnealingLR(opt, T_max=args.epochs - epoch)
@@ -67,12 +66,12 @@ def main():
             logits = model(x)
             loss = crit(logits, y)
             loss.backward()
-            opt.step()
-            # tr_loss += float(loss) * x.size(0)
+            opt.step() 
+
             tr_loss += loss.detach().item() * x.size(0)
         sch.step()
 
-        # valid
+
         model.eval()
         va_loss = 0.0
         y_true, y_pred = [], []

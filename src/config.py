@@ -1,12 +1,12 @@
 from pathlib import Path
 
-# Paths
+# Image paths
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
 OUTPUT_DIR = ROOT / "Output"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-# Classes 
+# categories 
 CLASS_NAMES = [
     "FR II",
     "typical",
@@ -19,7 +19,7 @@ CLASS_NAMES = [
     "X-Shaped",
 ]
 
-# Image / augmentation
+# Image Attribute for augmentation
 IMG_SIZE = 256
 CROP_SIZE = 224
 MEAN = [0.485, 0.456, 0.406]

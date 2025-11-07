@@ -3,16 +3,32 @@
 
 #### Project Summary
 
+This project focuses on classifying **MeerKAT radio galaxy sources** using three deep learning approaches implemented collaboratively by the team:
 
+- **Basic CNN** A custom convolutional neural network built from scratch to establish a baseline for radio morphology classification.  
+- **Transfer Learning (ResNet-50):** Fine-tuned a pretrained ResNet-50 model on 1,970 labeled MeerKAT images to leverage ImageNet features for feature extraction and generalisation.  
+- **Pseudo-Labelling:** Semi-supervised approach that used confident predictions from the model to iteratively expand the training set with unlabeled MeerKAT data.  
 
+The pipeline automates **data preparation**, **model training**, and **prediction** on unlabeled images.  
+Final evaluation was performed and the ResNet-50 model showed stable performance and generalization across classes.  
 
+---
 
+### ResNet-50 Training and Prediction
 
+```bash
+# Split dataset into training and validation sets
+\Assignment 3> python prepare_splits.py --labels_csv ../data/labels.csv --train_csv ../data/train.csv --val_csv ../data/val.csv
 
+# Train ResNet-50 model
+\Assignment 3> python -m src.train --train_csv data/train.csv --val_csv data/val.csv --out_dir Output/run_resnet50 --epochs 25 --batch 32 --lr 1e-4
 
+# Run inference on unlabeled MeerKAT images
+\Assignment 3> python -m src.resnet.predict --ckpt "Output/run_resnet50/best.pt" --unl_dir "data/unl" --num_classes 9 --out_csv "Output/run_resnet50/preds.csv"
+```
 
-
-
+---
+ 
 #### Collaborator Guide
 
 Use a **branch -> PR -> review -> merge** process Keep `main` stable.
@@ -60,10 +76,20 @@ git push origin --delete branch-name # like "feat/topic" (delete remote branch "
 #### Folder Layout
 ```bash
 scr/
-    dataset_preprocessing.py
-    model.py
-    train.py
-    predict.py
+    cnn/
+        maishah_data_preparation.py
+        maishah_predict.py
+        maishah_train.py
+    resnet/
+        infer.py
+        model.py
+        predict.py
+        train.py
+    pseudolabeling/
+        Pseudo (1).ipynb
+    config.py
+    data.py
+    prepare_splits.py
 data/ 
 Output/
 README.md

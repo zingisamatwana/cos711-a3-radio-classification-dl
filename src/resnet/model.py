@@ -7,7 +7,7 @@ def build_resnet50(num_classes: int, freeze_backbone: bool, weights="IMAGENET1K_
     backbone.fc = nn.Linear(in_feats, num_classes)
 
     if freeze_backbone:
-        # freeze all except final fc
+        # freeze weight update except final fc
         for name, p in backbone.named_parameters():
             if not name.startswith("fc."):
                 p.requires_grad = False
